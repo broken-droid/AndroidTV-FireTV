@@ -721,6 +721,18 @@ class ItemDetailsFragment : Fragment() {
 									contentScale = ContentScale.Fit,
 									alignment = Alignment.CenterStart,
 								)
+								if (isEpisode && !item.name.isNullOrEmpty()) {
+									Spacer(modifier = Modifier.height(6.dp))
+									Text(
+										text = item.name ?: "",
+										fontSize = 22.sp,
+										fontWeight = FontWeight.W600,
+										color = Color.White.copy(alpha = 0.9f),
+										maxLines = 2,
+										overflow = TextOverflow.Ellipsis,
+										lineHeight = 28.sp,
+									)
+								}
 							} else {
 								Text(
 									text = item.name ?: "",
