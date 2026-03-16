@@ -426,7 +426,7 @@
     <string name="action_use_password">Passwort verwenden</string>
     <string name="action_login">Anmelden</string>
     <string name="state_disabled">Deaktiviert</string>
-    <string name="lbl_subtitle_track2">Untertitelspur</string>
+    <string name="lbl_subtitle_track_title">Untertitelspur</string>
     <string name="lbl_subtitle_delay">Untertitelverzögerung</string>
     <string name="live_tv_preferences">Fernseh-Optionen</string>
     <string name="pref_telemetry_category">Absturzbericht</string>
@@ -637,7 +637,10 @@
     <string name="lbl_directors">Regisseure</string>
     <string name="lbl_writers">Drehbuchautoren</string>
     <string name="lbl_date_series_added">Datum hinzugefügt (Serie)</string>
-    <string name="lbl_audio_track2">Audiospur</string>
-    <string name="select_version2">Version auswählen</string>
+    <string name="lbl_audio_track_title">Audiospur</string>
+    <string name="select_version_title">Version auswählen</string>
+    <string name="lbl_version_number">Version %1$d</string>
+    <string name="lbl_movies_count">Filme (%1$d)</string>
+    <string name="lbl_series_count">Serien (%1$d)</string>
     <string name="select_reorder_items">Um Elemente neu anzuordnen, drücken Sie links und rechts auf dem Steuerkreuz</string>
 </resources>

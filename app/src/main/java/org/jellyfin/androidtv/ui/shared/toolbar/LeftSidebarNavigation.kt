@@ -93,9 +93,9 @@ import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.CollectionType
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinActivityViewModel
+import androidx.compose.ui.res.stringResource
 import org.koin.core.qualifier.named
 import java.util.UUID
-import androidx.compose.ui.res.stringResource
 
 @Composable
 fun LeftSidebarNavigation(

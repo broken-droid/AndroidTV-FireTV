@@ -236,12 +236,12 @@
     <string name="lbl_track">Track</string>
     <string name="lbl_tracks">Tracks</string>
     <string name="lbl_audio_track">Select audio track</string>
-    <string name="lbl_audio_track2">Audio Track</string>
+    <string name="lbl_audio_track_title">Audio Track</string>
     <string name="lbl_audio_track_missing">No audio tracks available</string>
     <string name="lbl_playback_speed">Playback speed</string>
     <string name="lbl_quality_profile">Quality profile</string>
     <string name="lbl_subtitle_track">Select subtitle track</string>
-    <string name="lbl_subtitle_track2">Subtitle Track</string>
+    <string name="lbl_subtitle_track_title">Subtitle Track</string>
     <string name="lbl_subtitle_delay">Subtitle delay</string>
     <string name="lbl_audio_delay">Audio delay</string>
     <string name="btn_got_it">Got it</string>
@@ -475,7 +475,10 @@
     <string name="lbl_pin_code_mismatch">PINs do not match</string>
     <string name="lbl_forgot_pin">Forgot PIN?</string>
     <string name="select_version">Version</string>
-    <string name="select_version2">Select Version</string>
+    <string name="select_version_title">Select Version</string>
+    <string name="lbl_version_number">Version %1$d</string>
+    <string name="lbl_movies_count">Movies (%1$d)</string>
+    <string name="lbl_series_count">Series (%1$d)</string>
     <string name="select_reorder_items">To reorder items, press left and right on the D-pad</string>
     <string name="duration_format_hours_minutes">%1$dh %2$dm</string>
     <string name="duration_format_minutes">%1$dm</string>

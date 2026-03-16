@@ -433,7 +433,7 @@
     <string name="image_size_xlarge">Enorme</string>
     <string name="image_size_smallest">Muy pequeño</string>
     <string name="image_type_poster">Cartel</string>
-    <string name="lbl_subtitle_track2">Pista de subtítulos</string>
+    <string name="lbl_subtitle_track_title">Pista de subtítulos</string>
     <string name="lbl_subtitle_delay">Retardo de los subtítulos</string>
     <string name="lbl_additional_parts">Partes adicionales</string>
     <string name="pref_telemetry_description">Enviar informe de fallos, incluye registros</string>
@@ -650,7 +650,10 @@
     <string name="lbl_directors">Directores</string>
     <string name="lbl_writers">Guionistas</string>
     <string name="lbl_date_series_added">Añadido el (serie)</string>
-    <string name="lbl_audio_track2">Pista de audio</string>
-    <string name="select_version2">Seleccionar versión</string>
+    <string name="lbl_audio_track_title">Pista de audio</string>
+    <string name="select_version_title">Seleccionar versión</string>
+    <string name="lbl_version_number">Versión %1$d</string>
+    <string name="lbl_movies_count">Películas (%1$d)</string>
+    <string name="lbl_series_count">Series (%1$d)</string>
     <string name="select_reorder_items">Para reordenar los elementos, presiona izquierda y derecha en el D‑pad</string>
 </resources>

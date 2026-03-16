@@ -1152,12 +1152,11 @@ class ItemDetailsFragment : Fragment() {
 				horizontalArrangement = Arrangement.spacedBy(16.dp),
 			) {
 				if (hasPlaybackPosition && canPlay) {
-					val resumeTime = item.userData?.playbackPositionTicks?.let { formatDuration(it) } ?: ""
 					DetailActionButton(
-						label = stringResource(R.string.lbl_resume_from, resumeTime),
+						label = stringResource(R.string.lbl_resume_from,
+							item.userData?.playbackPositionTicks?.let { formatDuration(it) } ?: ""),
 						icon = ImageVector.vectorResource(R.drawable.ic_play),
 						onClick = { handleResume(item) },
-						detail = resumeTime,
 						modifier = Modifier.focusRequester(playButtonFocusRequester),
 					)
 				}
@@ -1238,7 +1237,6 @@ class ItemDetailsFragment : Fragment() {
 
 				if (item.userData != null) {
 					DetailActionButton(
-						// just use 'favorite' label and let the icon color indicate state
 						label = stringResource(R.string.lbl_favorite),
 						icon = ImageVector.vectorResource(R.drawable.ic_heart),
 						onClick = { viewModel.toggleFavorite() },
@@ -1295,7 +1293,7 @@ class ItemDetailsFragment : Fragment() {
 				val prefAudioText = stringResource(R.string.pref_audio)
 				val defaultText = stringResource(R.string.lbl_default)
 				TrackSelectorDialog(
-					title = stringResource(R.string.lbl_audio_track2),
+					title = stringResource(R.string.lbl_audio_track_title),
 					options = trackNames,
 					selectedIndex = checkedIndex,
 					onSelect = { which ->
@@ -1329,7 +1327,7 @@ class ItemDetailsFragment : Fragment() {
 			val subtitleText = stringResource(R.string.pref_subtitles)
 			val noneText = stringResource(R.string.home_section_none)
 			TrackSelectorDialog(
-				title = stringResource(R.string.lbl_subtitle_track2),
+				title = stringResource(R.string.lbl_subtitle_track_title),
 				options = trackNames,
 				selectedIndex = checkedIndex,
 				onSelect = { which ->
@@ -1357,10 +1355,10 @@ class ItemDetailsFragment : Fragment() {
 		// Version selector dialog
 		if (showVersionDialog) {
 			val versions = item.mediaSources ?: emptyList()
-			val versionNames = versions.mapIndexed { i, source -> source.name ?: (stringResource(R.string.select_version) + " ${i + 1}") }
+			val versionNames = versions.mapIndexed { i, source -> source.name ?: stringResource(R.string.lbl_version_number, i + 1) }
 
 			TrackSelectorDialog(
-				title = stringResource(R.string.select_version2),
+				title = stringResource(R.string.select_version_title),
 				options = versionNames,
 				selectedIndex = uiState.selectedMediaSourceIndex,
 				onSelect = { which ->
@@ -1412,7 +1410,7 @@ class ItemDetailsFragment : Fragment() {
 			) {
 				items(seasons, key = { it.id }) { season ->
 					SeasonCard(
-						name = season.name ?: pluralStringResource(R.plurals.season_count,1),
+						name = season.name ?: stringResource(R.string.lbl_seasons),
 						imageUrl = getPosterUrl(season),
 						isWatched = season.userData?.played == true,
 						unplayedCount = season.userData?.unplayedItemCount,
@@ -1705,7 +1703,6 @@ class ItemDetailsFragment : Fragment() {
 								)
 
 								DetailActionButton(
-									// use 'favorite' label and let the icon color indicate state
 									label = stringResource(R.string.lbl_favorite),
 									icon = ImageVector.vectorResource(R.drawable.ic_heart),
 									onClick = { viewModel.toggleFavorite() },
@@ -1946,7 +1943,7 @@ class ItemDetailsFragment : Fragment() {
 				if (personMovies.isNotEmpty()) {
 					item {
 						SectionWithCards(
-							title = stringResource(R.string.lbl_movies) + " (${personMovies.size})",
+							title = stringResource(R.string.lbl_movies_count, personMovies.size),
 							items = personMovies,
 							firstItemFocusRequester = filmographyFocusRequester,
 							onItemFocused = { focusItem -> focusedBackdropUrl = getBackdropUrl(focusItem) },
@@ -1957,7 +1954,7 @@ class ItemDetailsFragment : Fragment() {
 					item {
 						Spacer(modifier = Modifier.height(24.dp))
 						SectionWithCards(
-							title = stringResource(R.string.lbl_series) + " (${personSeries.size})",
+							title = stringResource(R.string.lbl_series_count, personSeries.size),
 							items = personSeries,
 							onItemFocused = { focusItem -> focusedBackdropUrl = getBackdropUrl(focusItem) },
 							firstItemFocusRequester = if (personMovies.isEmpty()) filmographyFocusRequester else null,
@@ -2031,8 +2028,8 @@ class ItemDetailsFragment : Fragment() {
 		val hours = totalMinutes / 60
 		val minutes = totalMinutes % 60
 		return if (hours > 0)
-				getString(R.string.duration_format_hours_minutes,hours,minutes)
-			else getString(R.string.duration_format_minutes,minutes)
+				getString(R.string.duration_format_hours_minutes, hours, minutes)
+			else getString(R.string.duration_format_minutes, minutes)
 	}
 
 	private fun getEndsAt(ticks: Long): String {
