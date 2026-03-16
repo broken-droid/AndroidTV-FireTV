@@ -1,5 +1,6 @@
 package org.jellyfin.androidtv.ui.browsing.genre
 
+import android.content.SharedPreferences
 import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
@@ -88,6 +89,12 @@ class GenreBrowseFragment : Fragment() {
 
 	private var currentSortOption: GenreItemSortOption = SORT_OPTIONS[1]
 	private var sortButton: ImageButton? = null
+
+	private val preferenceChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+		if (key == UserPreferences.cardFocusExpansion.key) {
+			setupGrid()
+		}
+	}
 	
 	private var startLetter: String? = null
 	private var letterButton: ImageButton? = null
@@ -143,6 +150,8 @@ class GenreBrowseFragment : Fragment() {
 		if (isFirstLoad) {
 			loadContent()
 		}
+
+		userPreferences.registerChangeListener(preferenceChangeListener)
 	}
 
 	private fun setupHeader() {
@@ -528,6 +537,7 @@ class GenreBrowseFragment : Fragment() {
 
 	override fun onDestroyView() {
 		super.onDestroyView()
+		userPreferences.unregisterChangeListener(preferenceChangeListener)
 		jumplistPopup?.dismiss()
 		binding = null
 		gridViewHolder = null

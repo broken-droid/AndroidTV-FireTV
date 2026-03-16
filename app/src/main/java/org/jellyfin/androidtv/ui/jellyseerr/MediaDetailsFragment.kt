@@ -25,11 +25,15 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import coil3.ImageLoader
 import coil3.asDrawable
 import coil3.request.ImageRequest
 import coil3.toBitmap
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
@@ -54,7 +58,9 @@ import org.jellyfin.androidtv.ui.shared.toolbar.LeftSidebarNavigation
 import org.jellyfin.androidtv.ui.shared.toolbar.Navbar
 import org.jellyfin.androidtv.ui.shared.toolbar.NavbarActiveButton
 import org.jellyfin.androidtv.util.dp
+import org.jellyfin.androidtv.ui.settings.compat.SettingsViewModel
 import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
 import java.text.NumberFormat
@@ -73,6 +79,7 @@ class MediaDetailsFragment : Fragment() {
 	private val navigationRepository: NavigationRepository by inject()
 	private val apiClient: ApiClient by inject()
 	private val userPreferences: UserPreferences by inject()
+	private val settingsViewModel by activityViewModel<SettingsViewModel>()
 	
 	private var selectedItem: JellyseerrDiscoverItemDto? = null
 	private var movieDetails: JellyseerrMovieDetailsDto? = null
@@ -82,6 +89,8 @@ class MediaDetailsFragment : Fragment() {
 	private var toolbarContainer: View? = null
 	private var topToolbarOverlayView: View? = null
 	private var sidebarId: Int = View.NO_ID
+	private var navbarContainerView: View? = null
+	private var mainContainerRef: FrameLayout? = null
 
 	// Items per section (cast/recommendations/similar)
 	private val ITEMS_PER_SECTION = 15
@@ -138,8 +147,7 @@ class MediaDetailsFragment : Fragment() {
 			)
 			setBackgroundColor(Color.parseColor("#111827"))
 		}
-
-		val navbarPosition = userPreferences[UserPreferences.navbarPosition]
+		mainContainerRef = mainContainer
 
 		val scrollView = ScrollView(requireContext()).apply {
 			layoutParams = FrameLayout.LayoutParams(
@@ -170,6 +178,20 @@ class MediaDetailsFragment : Fragment() {
 		
 		mainContainer.addView(scrollView)
 		
+		setupNavbar()
+		
+		return mainContainer
+	}
+
+	private fun setupNavbar() {
+		val container = mainContainerRef ?: return
+
+		navbarContainerView?.let { container.removeView(it) }
+		navbarContainerView = null
+		topToolbarOverlayView = null
+
+		val navbarPosition = userPreferences[UserPreferences.navbarPosition]
+
 		when (navbarPosition) {
 			NavbarPosition.LEFT -> {
 				val sidebarContainer = FrameLayout(requireContext()).apply {
@@ -196,7 +218,8 @@ class MediaDetailsFragment : Fragment() {
 				}
 				toolbarContainer = sidebarOverlay
 				sidebarContainer.addView(sidebarOverlay)
-				mainContainer.addView(sidebarContainer)
+				navbarContainerView = sidebarContainer
+				container.addView(sidebarContainer)
 			}
 			NavbarPosition.TOP -> {
 				val topToolbarContainer = FrameLayout(requireContext()).apply {
@@ -224,11 +247,10 @@ class MediaDetailsFragment : Fragment() {
 				toolbarContainer = topToolbarOverlay
 				topToolbarOverlayView = topToolbarContainer
 				topToolbarContainer.addView(topToolbarOverlay)
-				mainContainer.addView(topToolbarContainer)
+				navbarContainerView = topToolbarContainer
+				container.addView(topToolbarContainer)
 			}
 		}
-		
-		return mainContainer
 	}
 
 	private fun setTopToolbarVisible(visible: Boolean) {
@@ -435,6 +457,12 @@ class MediaDetailsFragment : Fragment() {
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
+
+		settingsViewModel.settingsClosedCounter
+			.flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
+			.onEach { setupNavbar() }
+			.launchIn(lifecycleScope)
+
 		loadFullDetails()
 		
 		// Focus will be handled automatically by the first focusable element

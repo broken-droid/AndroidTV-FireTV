@@ -1,5 +1,6 @@
 package org.jellyfin.androidtv.ui.jellyseerr
 
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.View
@@ -43,6 +44,12 @@ class JellyseerrDiscoverRowsFragment : RowsSupportFragment() {
 	private val userPreferences: UserPreferences by inject()
 	private val jellyseerrPreferences: JellyseerrPreferences by inject(named("global"))
 	private var hasSetupRows = false
+
+	private val preferenceChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+		if (key == UserPreferences.cardFocusExpansion.key) {
+			setupRows()
+		}
+	}
 	
 	// Flow to track selected item for display in parent fragment
 	private val _selectedItemStateFlow = MutableStateFlow<JellyseerrDiscoverItemDto?>(null)
@@ -84,6 +91,7 @@ class JellyseerrDiscoverRowsFragment : RowsSupportFragment() {
 		
 		setupRows()
 		setupObservers()
+		userPreferences.registerChangeListener(preferenceChangeListener)
 	}
 	
 	override fun onSaveInstanceState(outState: Bundle) {
@@ -132,6 +140,11 @@ class JellyseerrDiscoverRowsFragment : RowsSupportFragment() {
 				false
 			}
 		}
+	}
+
+	override fun onDestroyView() {
+		userPreferences.unregisterChangeListener(preferenceChangeListener)
+		super.onDestroyView()
 	}
 
 	override fun onResume() {

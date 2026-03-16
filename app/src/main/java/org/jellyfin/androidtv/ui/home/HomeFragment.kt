@@ -34,13 +34,16 @@ import org.jellyfin.androidtv.ui.shared.toolbar.Navbar
 import org.jellyfin.androidtv.ui.shared.toolbar.NavbarActiveButton
 import org.koin.android.ext.android.inject
 import org.koin.compose.koinInject
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import androidx.media3.datasource.HttpDataSource
+import org.jellyfin.androidtv.ui.settings.compat.SettingsViewModel
 
 class HomeFragment : Fragment() {
 	private val mediaBarViewModel by inject<MediaBarSlideshowViewModel>()
 	private val interactionTrackerViewModel by inject<InteractionTrackerViewModel>()
 	private val userSettingPreferences by inject<UserSettingPreferences>()
 	private val userPreferences by inject<UserPreferences>()
+	private val settingsViewModel by activityViewModel<SettingsViewModel>()
 
 	private var titleView: TextView? = null
 	private var logoView: ImageView? = null
@@ -74,6 +77,12 @@ class HomeFragment : Fragment() {
 		summerView = view.findViewById(R.id.summerView)
 		halloweenView = view.findViewById(R.id.halloweenView)
 
+		setupNavbar(view)
+
+		return view
+	}
+
+	private fun setupNavbar(view: View) {
 		val navbarPosition = userPreferences[UserPreferences.navbarPosition] ?: NavbarPosition.TOP
 		
 		when (navbarPosition) {
@@ -106,14 +115,20 @@ class HomeFragment : Fragment() {
 				}
 			}
 		}
-
-		return view
 	}
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
 
 		setupSeasonalSurprise()
+
+		settingsViewModel.settingsClosedCounter
+			.flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
+			.onEach {
+				setupSeasonalSurprise()
+				view?.let { setupNavbar(it) }
+			}
+			.launchIn(lifecycleScope)
 
 		rowsFragment = childFragmentManager.findFragmentById(R.id.rowsFragment) as? HomeRowsFragment
 

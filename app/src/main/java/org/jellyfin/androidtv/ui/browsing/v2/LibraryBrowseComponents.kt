@@ -30,6 +30,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -69,6 +70,8 @@ import org.jellyfin.design.Tokens
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.BaseItemKind
 import org.koin.compose.koinInject
+import org.jellyfin.androidtv.ui.settings.compat.SettingsViewModel
+import org.koin.compose.viewmodel.koinActivityViewModel
 
 // Jellyfin accent blue
 val JellyfinBlue = Color(0xFF00A4DC)
@@ -928,7 +931,8 @@ private fun PosterWatchIndicator(
 	modifier: Modifier = Modifier,
 ) {
 	val userPreferences = koinInject<UserPreferences>()
-	val watchedIndicatorBehavior = userPreferences[UserPreferences.watchedIndicatorBehavior]
+	val settingsClosedCounter by koinActivityViewModel<SettingsViewModel>().settingsClosedCounter.collectAsState()
+	val watchedIndicatorBehavior = remember(settingsClosedCounter) { userPreferences[UserPreferences.watchedIndicatorBehavior] }
 
 	if (watchedIndicatorBehavior == WatchedIndicatorBehavior.NEVER) return
 	if (watchedIndicatorBehavior == WatchedIndicatorBehavior.EPISODES_ONLY && item.type != BaseItemKind.EPISODE) return

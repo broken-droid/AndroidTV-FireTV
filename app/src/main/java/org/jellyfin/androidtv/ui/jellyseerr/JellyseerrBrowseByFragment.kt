@@ -1,5 +1,6 @@
 package org.jellyfin.androidtv.ui.jellyseerr
 
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -60,6 +61,12 @@ class JellyseerrBrowseByFragment : Fragment() {
 	private val navigationRepository: NavigationRepository by inject()
 	private val backgroundService: BackgroundService by inject()
 	private val userPreferences: UserPreferences by inject()
+
+	private val preferenceChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+		if (key == UserPreferences.cardFocusExpansion.key) {
+			setupGrid()
+		}
+	}
 	
 	private var filterId: Int = 0
 	private var filterName: String = ""
@@ -148,10 +155,13 @@ class JellyseerrBrowseByFragment : Fragment() {
 		setupToolbar()
 		setupGrid()
 		loadContent()
+
+		userPreferences.registerChangeListener(preferenceChangeListener)
 	}
 	
 	override fun onDestroyView() {
 		super.onDestroyView()
+		userPreferences.unregisterChangeListener(preferenceChangeListener)
 		binding = null
 		gridViewHolder = null
 		sortButton = null

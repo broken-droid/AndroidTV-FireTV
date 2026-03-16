@@ -83,7 +83,7 @@ class ExoPlayerBackend(
 		val renderersFactory = DefaultRenderersFactory(context).apply {
 			setEnableDecoderFallback(true)
 			setExtensionRendererMode(
-				when (exoPlayerOptions.preferFfmpeg) {
+				when (exoPlayerOptions.preferFfmpeg()) {
 					true -> DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
 					false -> DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
 				}
@@ -105,10 +105,10 @@ class ExoPlayerBackend(
 			.setMediaSourceFactory(mediaSourceFactory)
 			.setPauseAtEndOfMediaItems(true)
 
-		val player = if (exoPlayerOptions.enableLibAssRenderer) {
+		val player = if (exoPlayerOptions.enableLibAssRenderer()) {
 			val assHandler = AssHandler(AssRenderType.OVERLAY_OPEN_GL)
 			assHandler.renderCallback = { render ->
-				render?.setFontScale(exoPlayerOptions.assSubtitleFontScale)
+				render?.setFontScale(exoPlayerOptions.assSubtitleFontScale())
 			}
 			val assParserFactory = AssSubtitleParserFactory(assHandler)
 			val assMediaSourceFactory = DefaultMediaSourceFactory(
@@ -129,7 +129,7 @@ class ExoPlayerBackend(
 		player.also { player ->
 			player.addListener(PlayerListener())
 
-			if (exoPlayerOptions.enableDebugLogging) {
+			if (exoPlayerOptions.enableDebugLogging()) {
 				player.addAnalyticsListener(EventLogger())
 			}
 		}

@@ -26,7 +26,9 @@ import org.jellyfin.androidtv.ui.shared.toolbar.Navbar
 import org.jellyfin.androidtv.util.toHtmlSpanned
 import org.jellyfin.androidtv.ui.shared.toolbar.NavbarActiveButton
 import org.jellyfin.androidtv.util.Debouncer
+import org.jellyfin.androidtv.ui.settings.compat.SettingsViewModel
 import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
 import kotlin.time.Duration.Companion.milliseconds
@@ -35,6 +37,8 @@ class DiscoverFragment : Fragment() {
 	private val viewModel: JellyseerrViewModel by viewModel()
 	private val backgroundService: BackgroundService by inject()
 	private val userPreferences: UserPreferences by inject()
+	
+	private val settingsViewModel by activityViewModel<SettingsViewModel>()
 	
 	private var titleTextView: TextView? = null
 	private var summaryTextView: TextView? = null
@@ -60,6 +64,12 @@ class DiscoverFragment : Fragment() {
 		ratingTextView = view.findViewById(R.id.rating_text)
 		mediaTypeTextView = view.findViewById(R.id.media_type_text)
 
+		setupNavbar(view)
+
+		return view
+	}
+
+	private fun setupNavbar(view: View) {
 		val navbarPosition = userPreferences[UserPreferences.navbarPosition]
 		val topToolbarOverlay = view.findViewById<ComposeView>(R.id.top_toolbar_overlay)
 		val sidebarOverlay = view.findViewById<ComposeView>(R.id.sidebar_overlay)
@@ -84,12 +94,15 @@ class DiscoverFragment : Fragment() {
 				}
 			}
 		}
-
-		return view
 	}
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
+
+		settingsViewModel.settingsClosedCounter
+			.flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
+			.onEach { this.view?.let { setupNavbar(it) } }
+			.launchIn(lifecycleScope)
 
 		rowsFragment = childFragmentManager.findFragmentById(R.id.jellyseerr_browse) as? JellyseerrDiscoverRowsFragment
 

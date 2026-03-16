@@ -260,16 +260,17 @@ class HomeRowsFragment : RowsSupportFragment(), AudioEventListener, View.OnKeyLi
 				}
 			}.launchIn(lifecycleScope)
 
-		// Listen for merge continue watching preference changes and recreate rows
 		var lastMergeState = userPreferences[UserPreferences.mergeContinueWatchingNextUp]
+		var lastFocusExpansion = userPreferences[UserPreferences.cardFocusExpansion]
 		lifecycleScope.launch {
 			lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-				// Check preference every 500ms while resumed
 				while (true) {
 					delay(500.milliseconds)
 					val currentMergeState = userPreferences[UserPreferences.mergeContinueWatchingNextUp]
-					if (currentMergeState != lastMergeState) {
+					val currentFocusExpansion = userPreferences[UserPreferences.cardFocusExpansion]
+					if (currentMergeState != lastMergeState || currentFocusExpansion != lastFocusExpansion) {
 						lastMergeState = currentMergeState
+						lastFocusExpansion = currentFocusExpansion
 						// Recreate the fragment to rebuild rows with new structure
 						parentFragmentManager.beginTransaction()
 							.detach(this@HomeRowsFragment)

@@ -16,6 +16,8 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import org.jellyfin.androidtv.ui.settings.compat.SettingsViewModel
+import org.koin.compose.viewmodel.koinActivityViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -93,7 +95,8 @@ private fun ServerBadge(
 	modifier: Modifier = Modifier,
 ) {
 	val userPreferences = koinInject<UserPreferences>()
-	val enableMultiServer = remember { userPreferences[UserPreferences.enableMultiServerLibraries] }
+	val settingsClosedCounter by koinActivityViewModel<SettingsViewModel>().settingsClosedCounter.collectAsState()
+	val enableMultiServer = remember(settingsClosedCounter) { userPreferences[UserPreferences.enableMultiServerLibraries] }
 	if (!enableMultiServer) return
 
 	val serverIdStr = item.serverId ?: return
@@ -166,7 +169,8 @@ private fun WatchIndicator(
 	modifier: Modifier = Modifier,
 ) {
 	val userPreferences = koinInject<UserPreferences>()
-	val watchedIndicatorBehavior = userPreferences[UserPreferences.watchedIndicatorBehavior]
+	val settingsClosedCounter by koinActivityViewModel<SettingsViewModel>().settingsClosedCounter.collectAsState()
+	val watchedIndicatorBehavior = remember(settingsClosedCounter) { userPreferences[UserPreferences.watchedIndicatorBehavior] }
 
 	if (watchedIndicatorBehavior == WatchedIndicatorBehavior.NEVER) return
 	if (watchedIndicatorBehavior == WatchedIndicatorBehavior.EPISODES_ONLY && item.type != BaseItemKind.EPISODE) return

@@ -68,7 +68,9 @@ import org.jellyfin.androidtv.util.isImagePrimarilyDark
 import org.jellyfin.androidtv.util.toHtmlSpanned
 import org.jellyfin.sdk.api.client.ApiClient
 import org.jellyfin.sdk.model.api.BaseItemKind
+import org.jellyfin.androidtv.ui.settings.compat.SettingsViewModel
 import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinActivityViewModel
 import timber.log.Timber
 
 /**
@@ -86,13 +88,12 @@ fun MediaBarSlideshowView(
 	val isFocused by viewModel.isFocused.collectAsState()
 	val userSettingPreferences = koinInject<UserSettingPreferences>()
 	val userPreferences = koinInject<UserPreferences>()
+	val settingsClosedCounter by koinActivityViewModel<SettingsViewModel>().settingsClosedCounter.collectAsState()
 
-	// Check if sidebar is enabled
-	val isSidebarEnabled = userPreferences[UserPreferences.navbarPosition] == NavbarPosition.LEFT
+	val isSidebarEnabled = remember(settingsClosedCounter) { userPreferences[UserPreferences.navbarPosition] == NavbarPosition.LEFT }
 
-	// Get overlay preferences
-	val overlayOpacity = userSettingPreferences[UserSettingPreferences.mediaBarOverlayOpacity] / 100f
-	val overlayColor = when (userSettingPreferences[UserSettingPreferences.mediaBarOverlayColor]) {
+	val overlayOpacity = remember(settingsClosedCounter) { userSettingPreferences[UserSettingPreferences.mediaBarOverlayOpacity] / 100f }
+	val overlayColor = remember(settingsClosedCounter) { when (userSettingPreferences[UserSettingPreferences.mediaBarOverlayColor]) {
 		"black" -> Color.Black
 		"dark_blue" -> Color(0xFF1A2332)
 		"purple" -> Color(0xFF4A148C)
@@ -105,7 +106,7 @@ fun MediaBarSlideshowView(
 		"slate" -> Color(0xFF475569)
 		"indigo" -> Color(0xFF1E3A8A)
 		else -> Color.Gray
-	}
+	} }
 
 	DisposableEffect(Unit) {
 		onDispose {
@@ -389,11 +390,12 @@ private fun ErrorView(message: String) {
 @Composable
 private fun MediaBarRating(item: MediaBarSlideItem) {
 	val userSettingPreferences = koinInject<UserSettingPreferences>()
+	val settingsClosedCounter by koinActivityViewModel<SettingsViewModel>().settingsClosedCounter.collectAsState()
 	val mdbListRepository = koinInject<MdbListRepository>()
 	val apiClient = koinInject<ApiClient>()
 	val baseUrl = apiClient.baseUrl
 
-	val enableAdditionalRatings = userSettingPreferences[UserSettingPreferences.enableAdditionalRatings]
+	val enableAdditionalRatings = remember(settingsClosedCounter) { userSettingPreferences[UserSettingPreferences.enableAdditionalRatings] }
 
 	var apiRatings by remember(item.itemId) { mutableStateOf<Map<String, Float>?>(null) }
 

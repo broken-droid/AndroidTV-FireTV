@@ -1,5 +1,6 @@
 package org.jellyfin.androidtv.ui.browsing
 
+import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.leanback.app.BrowseSupportFragment
 import androidx.leanback.widget.FocusHighlight
@@ -37,6 +38,12 @@ abstract class BrowseFolderFragment : BrowseSupportFragment(), RowLoader {
 	private val backgroundService by inject<BackgroundService>()
 	private val itemLauncher by inject<ItemLauncher>()
 	private val userPreferences by inject<UserPreferences>()
+
+	private val preferenceChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+		if (key == UserPreferences.cardFocusExpansion.key && rows.isNotEmpty()) {
+			loadRows(rows)
+		}
+	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -76,6 +83,8 @@ abstract class BrowseFolderFragment : BrowseSupportFragment(), RowLoader {
 				setupQueries(this@BrowseFolderFragment)
 			}
 		}
+
+		userPreferences.registerChangeListener(preferenceChangeListener)
 	}
 
 	protected abstract suspend fun setupQueries(rowLoader: RowLoader)
@@ -106,5 +115,10 @@ abstract class BrowseFolderFragment : BrowseSupportFragment(), RowLoader {
 				mutableAdapter.add(row)
 			}
 		}
+	}
+
+	override fun onDestroyView() {
+		userPreferences.unregisterChangeListener(preferenceChangeListener)
+		super.onDestroyView()
 	}
 }

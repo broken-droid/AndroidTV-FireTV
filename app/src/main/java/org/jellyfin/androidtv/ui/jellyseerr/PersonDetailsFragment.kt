@@ -18,12 +18,16 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import coil3.ImageLoader
 import coil3.asDrawable
 import coil3.load
 import coil3.request.ImageRequest
 import coil3.toBitmap
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.jellyfin.androidtv.R
@@ -40,7 +44,9 @@ import org.jellyfin.androidtv.ui.shared.toolbar.LeftSidebarNavigation
 import org.jellyfin.androidtv.ui.shared.toolbar.Navbar
 import org.jellyfin.androidtv.ui.shared.toolbar.NavbarActiveButton
 import org.jellyfin.androidtv.util.dp
+import org.jellyfin.androidtv.ui.settings.compat.SettingsViewModel
 import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
 import java.text.SimpleDateFormat
@@ -52,6 +58,7 @@ class PersonDetailsFragment : Fragment() {
 	private val backgroundService: BackgroundService by inject()
 	private val navigationRepository: NavigationRepository by inject()
 	private val userPreferences: UserPreferences by inject()
+	private val settingsViewModel by activityViewModel<SettingsViewModel>()
 
 	private var personId: Int = -1
 	private var personName: String = ""
@@ -60,6 +67,8 @@ class PersonDetailsFragment : Fragment() {
 	private var topToolbarOverlayView: View? = null
 	private var personInfoContainer: LinearLayout? = null
 	private var sidebarId: Int = View.NO_ID
+	private var navbarContainerView: View? = null
+	private var mainContainerRef: FrameLayout? = null
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -142,6 +151,19 @@ class PersonDetailsFragment : Fragment() {
 			setTopToolbarVisible(scrollY < 100)
 		}
 
+		mainContainerRef = mainContainer
+		setupNavbar()
+
+		return mainContainer
+	}
+
+	private fun setupNavbar() {
+		val container = mainContainerRef ?: return
+
+		navbarContainerView?.let { container.removeView(it) }
+		navbarContainerView = null
+		topToolbarOverlayView = null
+
 		val navbarPosition = userPreferences[UserPreferences.navbarPosition]
 		
 		when (navbarPosition) {
@@ -170,7 +192,8 @@ class PersonDetailsFragment : Fragment() {
 				}
 				sidebarId = sidebarOverlay.id
 				sidebarContainer.addView(sidebarOverlay)
-				mainContainer.addView(sidebarContainer)
+				navbarContainerView = sidebarContainer
+				container.addView(sidebarContainer)
 			}
 			NavbarPosition.TOP -> {
 				val topToolbarContainer = FrameLayout(requireContext()).apply {
@@ -198,11 +221,10 @@ class PersonDetailsFragment : Fragment() {
 				sidebarId = topToolbarOverlay.id
 				topToolbarOverlayView = topToolbarContainer
 				topToolbarContainer.addView(topToolbarOverlay)
-				mainContainer.addView(topToolbarContainer)
+				navbarContainerView = topToolbarContainer
+				container.addView(topToolbarContainer)
 			}
 		}
-
-		return mainContainer
 	}
 
 	private fun setTopToolbarVisible(visible: Boolean) {
@@ -255,6 +277,12 @@ class PersonDetailsFragment : Fragment() {
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
+
+		settingsViewModel.settingsClosedCounter
+			.flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
+			.onEach { setupNavbar() }
+			.launchIn(lifecycleScope)
+
 		loadPersonData()
 	}
 

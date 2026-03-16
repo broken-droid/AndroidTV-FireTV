@@ -1,6 +1,7 @@
 package org.jellyfin.androidtv.ui
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.RelativeLayout
@@ -33,6 +34,12 @@ class ClockUserView @JvmOverloads constructor(
 	
 	private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
+	private val preferenceChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+		if (key == UserPreferences.clockBehavior.key || key == UserPreferences.showShuffleButton.key) {
+			post { updateVisibility() }
+		}
+	}
+
 	var isVideoPlayer = false
 		set(value) {
 			field = value
@@ -44,6 +51,7 @@ class ClockUserView @JvmOverloads constructor(
 
 	init {
 		updateVisibility()
+		userPreferences.registerChangeListener(preferenceChangeListener)
 
 		binding.home.setOnClickListener {
 			navigationRepository.reset(Destinations.home, clearHistory = true)
@@ -78,6 +86,7 @@ class ClockUserView @JvmOverloads constructor(
 	
 	override fun onDetachedFromWindow() {
 		super.onDetachedFromWindow()
+		userPreferences.unregisterChangeListener(preferenceChangeListener)
 		scope.cancel()
 	}
 }

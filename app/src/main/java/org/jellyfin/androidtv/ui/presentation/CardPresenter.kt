@@ -20,6 +20,8 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import org.jellyfin.androidtv.ui.settings.compat.SettingsViewModel
+import org.koin.compose.viewmodel.koinActivityViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
@@ -368,7 +370,8 @@ private fun CardViewHolderContent(
 		?: image?.aspectRatio?.takeIf { it >= 0.1f } ?: 1f
 
 	val userPreferences = koinInject<UserPreferences>()
-	val posterSize = userPreferences[UserPreferences.posterSize]
+	val settingsClosedCounter by koinActivityViewModel<SettingsViewModel>().settingsClosedCounter.collectAsState()
+	val posterSize = remember(settingsClosedCounter) { userPreferences[UserPreferences.posterSize] }
 	val effectiveStaticHeight = if (staticHeight == 150) {
 		posterSize.height
 	} else {

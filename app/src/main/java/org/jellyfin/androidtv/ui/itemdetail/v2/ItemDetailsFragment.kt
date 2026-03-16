@@ -128,7 +128,9 @@ import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.BaseItemKind
 import org.jellyfin.sdk.model.api.ImageType
 import org.jellyfin.sdk.model.api.MediaStreamType
+import org.jellyfin.androidtv.ui.settings.compat.SettingsViewModel
 import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
 import java.time.Instant
@@ -147,6 +149,7 @@ class ItemDetailsFragment : Fragment() {
 	private val playbackLauncher: PlaybackLauncher by inject()
 	private val dataRefreshService: DataRefreshService by inject()
 	private val themeMusicPlayer: ThemeMusicPlayer by inject()
+	private val settingsViewModel by activityViewModel<SettingsViewModel>()
 
 	private var backdropImage: ImageView? = null
 	private var gradientView: View? = null
@@ -155,6 +158,8 @@ class ItemDetailsFragment : Fragment() {
 	private var toolbarId: Int = View.NO_ID
 	private var lastFocusedBeforeSidebar: View? = null
 	private var toolbarOverlayView: View? = null
+	private var navbarOverlayView: View? = null
+	private var mainContainer: FrameLayout? = null
 	private val scrollToTop = mutableStateOf(false)
 	private var lastUpdated: Instant = Instant.now()
 
@@ -270,6 +275,7 @@ class ItemDetailsFragment : Fragment() {
 			)
 			setBackgroundColor(AndroidColor.parseColor("#0A0A0A"))
 		}
+		this.mainContainer = mainContainer
 
 		backdropImage = ImageView(requireContext()).apply {
 			layoutParams = FrameLayout.LayoutParams(
@@ -304,6 +310,18 @@ class ItemDetailsFragment : Fragment() {
 		}
 		mainContainer.addView(contentView)
 
+		setupNavbar()
+
+		return mainContainer
+	}
+
+	private fun setupNavbar() {
+		val container = mainContainer ?: return
+
+		navbarOverlayView?.let { container.removeView(it) }
+		navbarOverlayView = null
+		toolbarOverlayView = null
+
 		val navbarPosition = userPreferences[UserPreferences.navbarPosition]
 
 		when (navbarPosition) {
@@ -320,7 +338,8 @@ class ItemDetailsFragment : Fragment() {
 						)
 					}
 				}
-				mainContainer.addView(sidebarOverlay)
+				navbarOverlayView = sidebarOverlay
+				container.addView(sidebarOverlay)
 			}
 			NavbarPosition.TOP -> {
 				val toolbarOverlay = ComposeView(requireContext()).apply {
@@ -336,11 +355,10 @@ class ItemDetailsFragment : Fragment() {
 					}
 				}
 				toolbarOverlayView = toolbarOverlay
-				mainContainer.addView(toolbarOverlay)
+				navbarOverlayView = toolbarOverlay
+				container.addView(toolbarOverlay)
 			}
 		}
-
-		return mainContainer
 	}
 
 	private fun isDescendantOf(view: View, ancestor: View): Boolean {
@@ -375,6 +393,11 @@ class ItemDetailsFragment : Fragment() {
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
+
+		settingsViewModel.settingsClosedCounter
+			.flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
+			.onEach { setupNavbar() }
+			.launchIn(lifecycleScope)
 
 		val itemIdStr = arguments?.getString("ItemId")
 		val serverIdStr = arguments?.getString("ServerId")
