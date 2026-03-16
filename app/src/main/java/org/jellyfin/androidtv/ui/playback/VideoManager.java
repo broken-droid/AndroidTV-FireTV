@@ -150,47 +150,35 @@ public class VideoManager {
         mSubtitleDelayHandler = new SubtitleDelayHandler(mCustomSubtitleView);
         mExoPlayer.addListener(mSubtitleDelayHandler);
 
-        // Subtitle position and size patch for wide aspect ratio videos (PR #4816)
+        // Expand subtitle view to fill screen for wide aspect ratio videos
         mExoPlayer.addListener(new Player.Listener() {
-            /**
-             * This Listener will await VideoSize info in order to override SubtitleView
-             * layout parameters in case it is a widescreen video. It will fill the entire
-             * screen instead of just the video view.
-             * @param videoSize The new size of the video.
-             */
             @Override
             public void onVideoSizeChanged(@NonNull VideoSize videoSize) {
                 if (videoSize.height == 0 || videoSize.width == 0)
                     return;
-                // Use our custom subtitle view instead of PlayerView's
                 SubtitleView subtitleView = mCustomSubtitleView;
                 int videoHeight = videoSize.height;
                 int videoWidth = videoSize.width;
                 float aspectRatio = (float) videoWidth / videoHeight;
-                // We're changing wide aspect ratio video subtitle to match others, so return if lower AR
                 if (aspectRatio < 1.78f)
                     return;
-                // In case movie is not 1080p, transform videoHeight in its 1080p equivalent
-                // because display dimensions are 1080p conformant
+                // Normalize to display-conformant 1080p equivalent
                 if (videoHeight != mExoPlayerView.getHeight())
                     videoHeight = (int) (mExoPlayerView.getWidth() / aspectRatio);
                 FrameLayout.LayoutParams subslp = (FrameLayout.LayoutParams) subtitleView.getLayoutParams();
                 int verticalMargins = mExoPlayerView.getHeight() - videoHeight;
                 subslp.height = mExoPlayerView.getHeight();
-                // Elevate SubtitleView by 1 vertical margin, otherwise it will start drawing below the top of the screen
                 subslp.topMargin = verticalMargins / (-2);
-                // Store new params and make the subs view visible despite being outside parent
                 subtitleView.setLayoutParams(subslp);
-                // Disable clipping on parent views to allow subtitles to render outside bounds
-                // This is needed for both top and bottom positioned subtitles on wide aspect ratio videos
-                FrameLayout parent = (FrameLayout) mExoPlayerView.getParent();
-                parent.setClipChildren(false);
-                parent.setClipToPadding(false);
-                if (parent.getParent() instanceof ViewGroup) {
-                    ((ViewGroup) parent.getParent()).setClipChildren(false);
-                    ((ViewGroup) parent.getParent()).setClipToPadding(false);
-                }
+                // Disable clipping on all ancestors so subtitles render outside player bounds
                 mExoPlayerView.setClipChildren(false);
+                ViewGroup ancestor = (ViewGroup) mExoPlayerView.getParent();
+                while (ancestor != null) {
+                    ancestor.setClipChildren(false);
+                    ancestor.setClipToPadding(false);
+                    ancestor = ancestor.getParent() instanceof ViewGroup
+                            ? (ViewGroup) ancestor.getParent() : null;
+                }
             }
         });
 
