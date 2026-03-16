@@ -288,4 +288,4 @@ fun EpisodePreviewOverlay(
 
 /** Whether the given item type supports preview playback. */
 fun isEligibleForPreview(item: BaseItemDto?): Boolean =
-	item?.type == BaseItemKind.EPISODE || item?.type == BaseItemKind.MOVIE
+	item?.type == BaseItemKind.EPISODE || item?.type == BaseItemKind.MOVIE || item?.type == BaseItemKind.MUSIC_VIDEO || item?.type == BaseItemKind.VIDEO
