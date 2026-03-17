@@ -25,7 +25,10 @@ import org.jellyfin.androidtv.util.sdk.ApiClientFactory
 import org.jellyfin.sdk.Jellyfin
 import org.jellyfin.sdk.api.client.ApiClient
 import org.jellyfin.sdk.api.client.extensions.imageApi
+import org.jellyfin.sdk.api.client.extensions.itemsApi
 import org.jellyfin.sdk.model.api.BaseItemDto
+import org.jellyfin.sdk.model.api.ImageType
+import org.jellyfin.sdk.model.api.ItemSortBy
 import timber.log.Timber
 import java.util.UUID
 import java.time.Instant
@@ -135,6 +138,58 @@ class BackgroundService(
 		_blurContext.value = blurContext
 
 		loadBackgrounds(setOf(imageUrl))
+	}
+
+	fun setBackgroundFromLibrary(libraryId: UUID, blurContext: BlurContext = BlurContext.BROWSING) {
+		if (!userPreferences[UserPreferences.backdropEnabled])
+			return clearBackgrounds()
+
+		_blurContext.value = blurContext
+
+		loadBackgroundsJob?.cancel()
+		loadBackgroundsJob = scope.launch(Dispatchers.IO) {
+			try {
+				// Try to find an item with a backdrop image
+				val response by api.itemsApi.getItems(
+					parentId = libraryId,
+					recursive = true,
+					sortBy = listOf(ItemSortBy.RANDOM),
+					limit = 1,
+					imageTypes = listOf(ImageType.BACKDROP),
+				)
+				val item = response.items.firstOrNull()
+				if (item != null) {
+					val backdropUrls = (item.itemBackdropImages + item.parentBackdropImages)
+						.map { it.getUrl(api) }
+						.toSet()
+					if (backdropUrls.isNotEmpty()) {
+						loadBackgrounds(backdropUrls)
+						return@launch
+					}
+				}
+
+				// Fallback: fetch any item with a primary image
+				val fallback by api.itemsApi.getItems(
+					parentId = libraryId,
+					recursive = true,
+					sortBy = listOf(ItemSortBy.RANDOM),
+					limit = 1,
+					imageTypes = listOf(ImageType.PRIMARY),
+				)
+				val fallbackItem = fallback.items.firstOrNull()
+				if (fallbackItem != null) {
+					val primaryUrl = api.imageApi.getItemImageUrl(
+						itemId = fallbackItem.id,
+						imageType = ImageType.PRIMARY,
+					)
+					loadBackgrounds(setOf(primaryUrl))
+					return@launch
+				}
+			} catch (e: Exception) {
+				Timber.w(e, "Failed to fetch random backdrop from library $libraryId")
+			}
+			clearBackgrounds()
+		}
 	}
 
 	private fun loadBackgrounds(backdropUrls: Set<String>) {

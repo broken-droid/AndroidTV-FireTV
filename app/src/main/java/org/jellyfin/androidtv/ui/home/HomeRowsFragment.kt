@@ -34,6 +34,7 @@ import org.jellyfin.androidtv.auth.repository.SessionRepository
 import org.jellyfin.androidtv.auth.repository.UserRepository
 import org.jellyfin.androidtv.constant.CustomMessage
 import org.jellyfin.androidtv.constant.HomeSectionType
+import org.jellyfin.androidtv.constant.QueryType
 import org.jellyfin.androidtv.data.model.DataRefreshService
 import org.jellyfin.androidtv.data.repository.CustomMessageRepository
 import org.jellyfin.androidtv.data.repository.NotificationsRepository
@@ -529,9 +530,14 @@ class HomeRowsFragment : RowsSupportFragment(), AudioEventListener, View.OnKeyLi
 					)
 				}
 
-				// Debounce background loading - only load after user stops navigating for 200ms
 				backgroundDebouncer.debounce {
-					backgroundService.setBackground(item.baseItem, BlurContext.BROWSING)
+					val baseItem = item.baseItem
+					val adapter = (row as? ListRow)?.adapter as? ItemRowAdapter
+					if (adapter?.queryType == QueryType.Views && baseItem != null) {
+						backgroundService.setBackgroundFromLibrary(baseItem.id, BlurContext.BROWSING)
+					} else {
+						backgroundService.setBackground(baseItem, BlurContext.BROWSING)
+					}
 				}
 				
 				// Play theme music on focus if enabled (with delay)
