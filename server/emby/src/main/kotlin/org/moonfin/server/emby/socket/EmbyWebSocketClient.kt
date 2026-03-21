@@ -155,6 +155,11 @@ class EmbyWebSocketClient(
 				_connectionState.value = EmbyConnectionState.TokenExpired
 				return
 			}
+			if (response?.code == 404) {
+				// Emby endpoint not available on this server/proxy path; retrying only burns resources.
+				_connectionState.value = EmbyConnectionState.ServerUnreachable
+				return
+			}
 			_connectionState.value = EmbyConnectionState.Error(t)
 			scheduleReconnect()
 		}
