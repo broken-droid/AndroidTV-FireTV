@@ -172,17 +172,4 @@ object YouTubeStreamResolver {
 	// eng -> en, spa -> es, ...
 	private fun iso3ToIso2(iso3: String): String? =
 		iso3ToIso2Map[iso3.lowercase()]
-
-	/*
-	// pretty print helper for AudioStream
-	private fun AudioStream.describe(): String {
-		val lang = audioLocale?.language ?: "?"
-		val country = audioLocale?.country ?: "?"
-		val tag = audioLocale?.toLanguageTag() ?: "?"
-		val codec = codec ?: "?"
-		val bitrate = averageBitrate
-
-		return "AudioStream(lang=$lang, country=$country, tag=$tag, codec=$codec, bitrate=${bitrate}bps)"
-	}
-	*/
 }
