@@ -8,7 +8,6 @@ import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.DeliveryMethod
 import org.schabi.newpipe.extractor.stream.VideoStream
 import timber.log.Timber
-import java.util.Locale
 
 /**
  * Resolves direct video stream URLs from YouTube video IDs using
@@ -118,18 +117,17 @@ object YouTubeStreamResolver {
 	}
 
 	private fun pickBestAudio(streams: List<AudioStream>, lang: String? = null): AudioStream? {
-		val normalized = if (lang.isNullOrBlank()) null else iso3ToIso2(lang)
 		// Filter by preferred language, if provided
-		val languageMatches = if (normalized != null) {
+		val languageMatches = if (lang != null) {
 			streams.filter {
-				it.audioLocale?.language?.lowercase() == normalized
+				it.audioLocale?.language?.lowercase() == lang
 			}
 		} else emptyList()
-		Timber.d("YoutubeStreamResolver: Found ${languageMatches.size} audio streams for language: $normalized")
+		Timber.d("YoutubeStreamResolver: Found ${languageMatches.size} audio streams for language: $lang")
 		// If we found any matching streams, pick from these
 		val candidates = languageMatches.ifEmpty {
 			// Otherwise, fall back to all streams
-			Timber.d("YoutubeStreamResolver: No matching streams found for language: $normalized -- falling back to all")
+			Timber.d("YoutubeStreamResolver: No matching streams found for language: $lang -- falling back to all")
 			streams
 		}
 		Timber.d("YoutubeStreamResolver: Picking from ${candidates.size} streams")
@@ -150,26 +148,4 @@ object YouTubeStreamResolver {
 		codec.startsWith("av01") -> 2
 		else -> 3
 	}
-	// lazy map to convert ISO 3 letter codes to 2 letter
-	// eng -> en, spa -> es, ...
-	private val iso3ToIso2Map: Map<String, String> by lazy {
-		Locale.getAvailableLocales()
-			.mapNotNull { locale ->
-				runCatching {
-					val iso3 = locale.isO3Language.lowercase()
-					val iso2 = locale.language.lowercase()
-					if (iso3.isNotBlank() && iso2.isNotBlank()) {
-						iso3 to iso2
-					} else {
-						null
-					}
-				}.getOrNull()
-			}
-			.toMap()
-	}
-
-	// convert ISO 3 letter codes to 2 letter
-	// eng -> en, spa -> es, ...
-	private fun iso3ToIso2(iso3: String): String? =
-		iso3ToIso2Map[iso3.lowercase()]
 }

@@ -2,9 +2,12 @@ package org.jellyfin.androidtv.ui.home.mediabar
 
 import androidx.core.net.toUri
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jellyfin.androidtv.auth.repository.UserRepository
 import org.jellyfin.sdk.api.client.ApiClient
+import org.jellyfin.sdk.api.client.extensions.localizationApi
 import org.jellyfin.sdk.api.client.extensions.userLibraryApi
 import org.jellyfin.sdk.api.client.extensions.videosApi
 import org.jellyfin.sdk.model.api.BaseItemDto
@@ -12,6 +15,7 @@ import org.jellyfin.sdk.model.api.SubtitleDeliveryMethod
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import timber.log.Timber
+import java.util.Locale
 import java.util.UUID
 
 data class TrailerPreviewInfo(
@@ -32,6 +36,13 @@ object TrailerResolver : KoinComponent {
 	private const val YOUTUBE_ID_PARAMETER = "v"
 	private const val YOUTUBE_ID_LENGTH = 11
 	private val user: UserRepository by inject()
+	private val api: ApiClient by inject()
+
+	// cache the api response for the cultures contained in:
+	// https://github.com/jellyfin/jellyfin/blob/master/Emby.Server.Implementations/Localization/iso6392.txt
+	private var cachedCulturesMap: Map<String, String>? = null
+	private val culturesMutex = Mutex()
+
 
 	fun extractYoutubeVideoId(url: String): String? {
 		return try {
@@ -119,6 +130,41 @@ object TrailerResolver : KoinComponent {
 	suspend fun resolveTrailerFromItem(item: BaseItemDto): TrailerPreviewInfo? =
 		resolveYouTubeTrailerFromItem(item)
 
+	private suspend fun getNormalizedLanguage(preferredLanguage: String?): String? {
+		if (preferredLanguage.isNullOrBlank()) return null
+		if (preferredLanguage.length <= 2) return preferredLanguage
+
+		val key = preferredLanguage.lowercase(Locale.ROOT)
+
+		try {
+			var mapping = cachedCulturesMap
+			if (mapping == null) {
+				// lock for init
+				culturesMutex.withLock {
+					mapping = cachedCulturesMap
+					if (mapping == null) {
+						val map = mutableMapOf<String, String>()
+						val cultures = api.localizationApi.getCultures().content
+						// transform into map for better lookups
+						cultures.forEach { culture ->
+							val iso2 = culture.twoLetterIsoLanguageName
+							if (iso2.isNotBlank()) {
+								culture.threeLetterIsoLanguageNames.forEach { iso3 ->
+									map[iso3.lowercase(Locale.ROOT)] = iso2.lowercase(Locale.ROOT)
+								}
+							}
+						}
+						mapping = map.toMap() // make immutable
+						cachedCulturesMap = mapping
+					}
+				}
+			}
+			return mapping?.get(key)
+		} catch (e: Exception) {
+			Timber.d(e, "TrailerResolver: Failed to fetch cultures for language normalization")
+			return null
+		}
+	}
 	private suspend fun resolveYouTubeTrailerFromItem(item: BaseItemDto): TrailerPreviewInfo? =
 		withContext(Dispatchers.IO) {
 			val trailers = item.remoteTrailers.orEmpty()
@@ -145,9 +191,11 @@ object TrailerResolver : KoinComponent {
 
 			// get preferred language from user configuration
 			val preferredLanguage = user.currentUser.value?.configuration?.audioLanguagePreference
+			// look up 2 letter language code to use with resolveStream
+			val normalizedLanguage = getNormalizedLanguage(preferredLanguage)
 			val streamInfo = YouTubeStreamResolver.resolveStream(
 				youtubeVideoId,
-				preferredLanguage
+				normalizedLanguage
 			)
 			if (streamInfo == null) {
 				Timber.w("TrailerResolver: Could not resolve stream for $youtubeVideoId")
