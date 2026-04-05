@@ -40,6 +40,7 @@ object TrailerResolver : KoinComponent {
 
 	// cache the api response for the cultures contained in:
 	// https://github.com/jellyfin/jellyfin/blob/master/Emby.Server.Implementations/Localization/iso6392.txt
+	@Volatile
 	private var cachedCulturesMap: Map<String, String>? = null
 	private val culturesMutex = Mutex()
 
