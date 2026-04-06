@@ -133,7 +133,7 @@ fun EpisodePreviewOverlay(
 				val preferredLanguage = userRepository.currentUser.value?.configuration?.audioLanguagePreference
 				val itemDetails = effectiveApi.userLibraryApi.getItem(item.id, userId).content
 				// jellyfin uses 3 letter country codes here, no need to convert to 2 letter
-				var audioStreams: List<MediaStream>? = itemDetails.mediaSources?.firstOrNull()?.mediaStreams?.filter { it.type == MediaStreamType.AUDIO }
+				val audioStreams: List<MediaStream>? = itemDetails.mediaSources?.firstOrNull()?.mediaStreams?.filter { it.type == MediaStreamType.AUDIO }
 				val match = audioStreams?.find { it.language?.equals(preferredLanguage, ignoreCase = true) == true }
 				// use matched language index, or try first audio track, null otherwise
 				val audioIndex = match?.index ?: audioStreams?.firstOrNull()?.index
